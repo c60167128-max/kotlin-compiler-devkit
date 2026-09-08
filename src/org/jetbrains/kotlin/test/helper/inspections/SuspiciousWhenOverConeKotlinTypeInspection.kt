@@ -34,17 +34,20 @@ private val REQUIRED_BRANCHES = listOf(
 
 private val CLASS_ID_CLASS_LIKE_TYPE = "ConeClassLikeType".coneTypeClassId()
 private val CLASS_ID_TYPE_PARAMETER_TYPE = "ConeTypeParameterType".coneTypeClassId()
-private val CLASS_ID_TYPE_LOOKUP_TAP_BASED = "ConeLookupTagBasedType".coneTypeClassId()
+private val CLASS_ID_LOOKUP_TAP_BASED = "ConeLookupTagBasedType".coneTypeClassId()
+private val CLASS_ID_UNION_TYPE = "ConeUnionType".coneTypeClassId()
 
 private fun KaSession.buildMissingTypeList(): MutableList<KaType> {
     return mutableListOf<KaType>().apply {
         REQUIRED_BRANCHES.mapTo(this) { classId -> buildClassType(classId) }
+        buildClassType(CLASS_ID_UNION_TYPE).takeIf { it.symbol != null }?.let { add(it) }
+
         val typeParameterType = buildClassType(CLASS_ID_TYPE_PARAMETER_TYPE)
         if (typeParameterType.symbol != null) {
             add(typeParameterType)
             add(buildClassType(CLASS_ID_CLASS_LIKE_TYPE))
         } else {
-            add(buildClassType(CLASS_ID_TYPE_LOOKUP_TAP_BASED))
+            add(buildClassType(CLASS_ID_LOOKUP_TAP_BASED))
         }
     }
 }
