@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.test.helper
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import java.io.File
 
@@ -122,4 +124,16 @@ fun VirtualFile.mainTestFileOrNull(project: Project): VirtualFile? {
 
         null -> null
     }
+}
+
+/**
+ * Returns the first open project which contains this file in its content, or `null` if there is none.
+ */
+fun VirtualFile.findProject(): Project? {
+    return ProjectManager.getInstance()
+        .openProjects
+        .firstOrNull { project ->
+            ProjectFileIndex.getInstance(project)
+                .isInContent(this)
+        }
 }

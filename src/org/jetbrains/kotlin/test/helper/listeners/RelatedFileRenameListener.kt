@@ -1,9 +1,6 @@
 package org.jetbrains.kotlin.test.helper.listeners
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.removeUserData
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,6 +9,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import org.jetbrains.kotlin.test.helper.allExtensions
 import org.jetbrains.kotlin.test.helper.asPathWithoutAllExtensions
+import org.jetbrains.kotlin.test.helper.findProject
 import org.jetbrains.kotlin.test.helper.getRelatedTestFiles
 import org.jetbrains.kotlin.test.helper.isTestDataFile
 
@@ -45,14 +43,5 @@ class RelatedFileRenameListener : BulkFileListener {
                 }
             }
         }
-    }
-
-    private fun VirtualFile.findProject(): Project? {
-        return ProjectManager.getInstance()
-            .openProjects
-            .firstOrNull { project ->
-                ProjectFileIndex.getInstance(project)
-                    .isInContent(this)
-            }
     }
 }
