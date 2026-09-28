@@ -6,7 +6,6 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.filename.UniqueNameBuilder
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
@@ -22,11 +21,7 @@ import javax.swing.*
 class ChooseAdditionalFileAction(
     private val testDataEditor: TestDataEditor,
     private val previewEditorState: PreviewEditorState
-) : AbstractComboBoxAction<FileEditor>(), DumbAware {
-    companion object {
-        private const val NO_NAME_PROVIDED = "## no name provided ##"
-    }
-
+) : AbstractComboBoxAction<VirtualFile>(), DumbAware {
     /**
      * If two or more files have the same name, we want to display the parts of their full paths that differ.
      * This is the same thing that IDEA does for tab titles when two files with the same names are opened.
@@ -58,22 +53,21 @@ class ChooseAdditionalFileAction(
         return comboBoxButton
     }
 
-    override fun update(item: FileEditor, presentation: Presentation, popup: Boolean) {
-        presentation.text = item.presentableName
+    override fun update(item: VirtualFile, presentation: Presentation, popup: Boolean) {
+        presentation.text = item.uniqueName
     }
 
-    private val FileEditor?.presentableName: String
+    private val VirtualFile.uniqueName: String
         get() {
-            val file = this?.file ?: return NO_NAME_PROVIDED
             val mainFile = testDataEditor.baseEditor.file
-            if (file == mainFile) return "None"
-            if (file.toNioPath().parent == mainFile?.toNioPath()?.parent)
-                return file.allExtensions
-            return uniqueNameBuilder?.getShortPath(file) ?: file.name
+            if (this == mainFile) return "None"
+            if (toNioPath().parent == mainFile?.toNioPath()?.parent)
+                return allExtensions
+            return uniqueNameBuilder?.getShortPath(this) ?: name
         }
 
-    override fun selectionChanged(item: FileEditor): Boolean {
-        previewEditorState.chooseNewEditor(item)
+    override fun selectionChanged(item: VirtualFile): Boolean {
+        previewEditorState.previewEditors.firstOrNull { it.file == item }?.let { previewEditorState.chooseNewEditor(it) }
         testDataEditor.updatePreviewEditor()
         return true
     }
@@ -89,7 +83,7 @@ class ChooseAdditionalFileAction(
 
     fun updateBoxList() {
         uniqueNameBuilder = createUniqueNameBuilder()
-        setItems(previewEditorState.previewEditors, previewEditorState.currentPreview)
+        setItems(previewEditorState.previewEditors.map { it.file }, previewEditorState.currentPreview.file)
     }
 
     inner class ShowDiffAction : AnAction(

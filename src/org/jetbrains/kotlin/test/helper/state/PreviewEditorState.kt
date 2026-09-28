@@ -54,7 +54,7 @@ class PreviewEditorState(
     fun updatePreviewEditors() {
         val chosenPreview = currentPreview
         previewEditors = findPreviewEditors()
-        currentPreviewIndex = previewEditors.indexOf(chosenPreview)
+        currentPreviewIndex = previewEditors.indexOfFirst { it.file == chosenPreview.file }
     }
 
     private fun findPreviewEditors(): List<FileEditor> {
@@ -63,8 +63,14 @@ class PreviewEditorState(
         val project = baseEditor.editor.project ?: return emptyList()
         val relatedFiles = file.getRelatedTestFiles(project)
 
-        return relatedFiles.map {
-            TextEditorProvider.getInstance().createEditor(project, it).also { Disposer.register(parent, it) }
+        @Suppress("UselessCallOnNotNull")
+        val currentByFile = previewEditors.orEmpty().associateBy { it.file }
+
+        return relatedFiles.map { file ->
+            currentByFile[file] ?: TextEditorProvider.getInstance().createEditor(project, file)
+                .also {
+                    Disposer.register(parent, it)
+                }
         }
     }
 }
